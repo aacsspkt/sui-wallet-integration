@@ -22,6 +22,10 @@ const USDC_TYPE = "0xa1ec7fc00a6f40db9693ad1415d0c193ad3906494428cf252621037bd71
 
 export default function Home() {
 	return (
+		// Wrap the app with necessary providers
+		// QueryClientProvider: Provides React Query context for managing async queries
+		// SuiClientProvider: Provides the Sui client context for interacting with the Sui network
+		// WalletKitProvider: Provides wallet connection and interaction capabilities
 		<QueryClientProvider client={queryClient}>
 			<SuiClientProvider
 				networks={networks}
@@ -73,6 +77,7 @@ function App() {
 			const parsedAmount = BigNumber(amount)
 				.times(10 ** 6)
 				.toFixed(0);
+
 			// Split the coin and get a new coin with the specified amount
 			// This creates a new coin object with the desired amount to be transferred
 			const [coin] = tx.splitCoins(coins[0].coinObjectId, [tx.pure(BigInt(parsedAmount))]);
@@ -93,52 +98,43 @@ function App() {
 	};
 
 	return (
-		<div className="w-full">
-			<header className="w-full h-16 gap-4 flex flex-row justify-between px-4 py-2 shadow mb-8 dark:shadow-gray-400">
-				<h1 className="text-xl font-semibold">Sui Test App</h1>
+		<main className="flex min-h-screen flex-col items-center justify-center p-24">
+			<div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm">
+				<h1 className="text-4xl font-bold mb-8">Sui USDC Sender (Testnet)</h1>
 				<ConnectButton className="w-48 h-12  bg-blue-500 !py-1 !px-2 text-center rounded text-white" />
-			</header>
-
-			<section>
-				<p>
-					<span className="">Wallet status:</span> {status}
-				</p>
-
-				<div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm">
-					<h1 className="text-4xl font-bold mb-8">Sui USDC Sender (Testnet)</h1>
-					{connected && currentAccount && (
-						<p className="mt-4">Connected: {currentAccount.address}</p>
-					)}
-					<div className="mt-8">
-						<input
-							type="text"
-							placeholder="Amount (in USDC)"
-							value={amount}
-							onChange={(e) => setAmount(e.target.value)}
-							className="p-2 border rounded mr-2 text-black"
-						/>
-						<input
-							type="text"
-							placeholder="Recipient Address"
-							value={recipientAddress}
-							onChange={(e) => setRecipientAddress(e.target.value)}
-							className="p-2 border rounded mr-2 text-black"
-						/>
-						<button
-							onClick={handleSendTokens}
-							disabled={!connected}
-							className={`p-2 rounded ${
-								connected && amount && recipientAddress
-									? "bg-blue-200 text-black hover:bg-blue-300"
-									: "bg-gray-300 text-gray-500"
-							} transition-colors duration-200`}
-						>
-							Send USDC
-						</button>
-					</div>
-					{txStatus && <p className="mt-4">{txStatus}</p>}
+				<p className="mb-4">Wallet status: {status}</p>
+				{connected && currentAccount && (
+					<p className="mt-4">Connected: {currentAccount.address}</p>
+				)}
+				<div className="mt-8">
+					<input
+						type="text"
+						placeholder="Amount (in USDC)"
+						value={amount}
+						onChange={(e) => setAmount(e.target.value)}
+						className="p-2 border rounded mr-2 text-black"
+					/>
+					<input
+						type="text"
+						placeholder="Recipient Address"
+						value={recipientAddress}
+						onChange={(e) => setRecipientAddress(e.target.value)}
+						className="p-2 border rounded mr-2 text-black"
+					/>
+					<button
+						onClick={handleSendTokens}
+						disabled={!connected}
+						className={`p-2 rounded ${
+							connected && amount && recipientAddress
+								? "bg-blue-200 text-black hover:bg-blue-300"
+								: "bg-gray-300 text-gray-500"
+						} transition-colors duration-200`}
+					>
+						Send USDC
+					</button>
 				</div>
-			</section>
-		</div>
+				{txStatus && <p className="mt-4">{txStatus}</p>}
+			</div>
+		</main>
 	);
 }
