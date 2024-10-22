@@ -18,7 +18,8 @@ const networks = {
 
 // Define the USDC token type on Sui testnet
 // This is the unique identifier for the USDC token on Sui
-const USDC_TYPE = "0xa1ec7fc00a6f40db9693ad1415d0c193ad3906494428cf252621037bd7117e29::usdc::USDC";
+const TOKEN_TYPE = "0xaf9e228fd0292e2a27b4859bc57a2f3a9faedb9341b6307c84fef163e44790cc::uni::UNI";
+const TOKEN_DECIMALS = 9;
 
 export default function Home() {
 	return (
@@ -29,7 +30,7 @@ export default function Home() {
 		<QueryClientProvider client={queryClient}>
 			<SuiClientProvider
 				networks={networks}
-				defaultNetwork="testnet"
+				defaultNetwork="mainnet"
 			>
 				<WalletKitProvider>
 					<App />
@@ -44,14 +45,38 @@ function App() {
 	const { currentAccount, signAndExecuteTransactionBlock, status } = useWalletKit();
 	// Get the Sui client for interacting with the Sui network
 	const suiClient = useSuiClient();
+
 	const [connected, setConnected] = useState(false);
 	const [amount, setAmount] = useState("");
 	const [recipientAddress, setRecipientAddress] = useState("");
 	const [txStatus, setTxStatus] = useState("");
+	const [balance, setBalance] = useState("0");
 
 	useEffect(() => {
 		setConnected(!!currentAccount);
 	}, [currentAccount]);
+
+	useEffect(() => {
+		async function fetchBalance() {
+			if (currentAccount) {
+				const { data: coins } = await suiClient.getCoins({
+					owner: currentAccount.address,
+					coinType: TOKEN_TYPE,
+				});
+				console.log("coins", coins);
+
+				if (coins.length > 0) {
+					const coin = coins[0];
+					const balance = BigNumber(coin.balance)
+						.div(10 ** TOKEN_DECIMALS)
+						.toFixed();
+					setBalance(balance);
+				}
+			}
+		}
+
+		fetchBalance();
+	}, [currentAccount, suiClient]);
 
 	const handleSendTokens = async () => {
 		if (!currentAccount || !amount || !recipientAddress) {
@@ -63,7 +88,7 @@ function App() {
 			// This uses the SuiClient to get coins of the specified type owned by the current address
 			const { data: coins } = await suiClient.getCoins({
 				owner: currentAccount.address,
-				coinType: USDC_TYPE,
+				coinType: TOKEN_TYPE,
 			});
 			if (coins.length === 0) {
 				setTxStatus("No USDC coins found in your wallet");
@@ -75,7 +100,7 @@ function App() {
 
 			// Parse amount to its smallest units without decimals
 			const parsedAmount = BigNumber(amount)
-				.times(10 ** 6)
+				.times(10 ** TOKEN_DECIMALS)
 				.toFixed(0);
 
 			// Split the coin and get a new coin with the specified amount
@@ -102,9 +127,12 @@ function App() {
 			<div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm">
 				<h1 className="text-4xl font-bold mb-8">Sui USDC Sender (Testnet)</h1>
 				<ConnectButton className="w-48 h-12  bg-blue-500 !py-1 !px-2 text-center rounded text-white" />
-				<p className="mb-4">Wallet status: {status}</p>
+				<p className="mt-4">Wallet status: {status}</p>
 				{connected && currentAccount && (
-					<p className="mt-4">Connected: {currentAccount.address}</p>
+					<>
+						<p className="">Connected: {currentAccount.address}</p>
+						<p>Balance: {balance}</p>
+					</>
 				)}
 				<div className="mt-8">
 					<input
